@@ -1,3 +1,13 @@
+# Demo Images
+
+![alt text](demo/image1.jpg)
+
+![alt text](demo/image2.jpg)
+
+![alt text](demo/image3.jpg)
+
+
+
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 # Getting Started
