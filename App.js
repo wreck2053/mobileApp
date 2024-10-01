@@ -13,7 +13,7 @@ const App = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Home"
+        initialRouteName="MyBedroom"
         screenOptions={{
           headerStyle: { backgroundColor: "#434343" },
           headerTintColor: "#f4f4f9",

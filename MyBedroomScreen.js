@@ -80,13 +80,18 @@ const MyBedroomScreen = () => {
                 size={tileSize}
               />
               <CustomButton
-                title="Cool Mode"
-                onPress={() => sendCommand("/mode/cool")}
+                title="Preset AC"
+                onPress={() => sendCommand("/preset-ac")}
                 size={tileSize}
               />
               <CustomButton
                 title="Swing"
                 onPress={() => sendCommand("/state/swing")}
+                size={tileSize}
+              />
+              <CustomButton
+                title="Cool Mode"
+                onPress={() => sendCommand("/mode/cool")}
                 size={tileSize}
               />
             </View>
@@ -116,6 +121,11 @@ const MyBedroomScreen = () => {
                 onPress={() => sendCommand("/state/led")}
                 size={tileSize}
               />
+              <CustomButton
+                title="Toggle NightLamp"
+                onPress={() => sendCommand("/toggle-nl")}
+                size={tileSize}
+              />
             </View>
           </View>
         </ScrollView>
@@ -139,8 +149,8 @@ const MyBedroomScreen = () => {
               minimumValue={17}
               maximumValue={30}
               step={1}
-              thumbTintColor="#6a11cb"
-              minimumTrackTintColor="#6a11cb"
+              thumbTintColor="#707070"
+              minimumTrackTintColor="#707070"
               maximumTrackTintColor="#000000"
               style={styles.slider}
             />
@@ -178,8 +188,8 @@ const MyBedroomScreen = () => {
               minimumValue={1}
               maximumValue={3}
               step={1}
-              thumbTintColor="#6a11cb"
-              minimumTrackTintColor="#6a11cb"
+              thumbTintColor="#707070"
+              minimumTrackTintColor="#707070"
               maximumTrackTintColor="#000000"
               style={styles.slider}
             />
@@ -247,6 +257,7 @@ const styles = StyleSheet.create({
   modalHeading: {
     fontSize: 20,
     fontWeight: "bold",
+    color: "#000",
     marginBottom: 20,
   },
   slider: {
@@ -254,7 +265,7 @@ const styles = StyleSheet.create({
     height: 40,
   },
   confirmButton: {
-    backgroundColor: "#6a11cb",
+    backgroundColor: "#707070",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -266,7 +277,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   closeButton: {
-    backgroundColor: "#757575",
+    backgroundColor: "#707070",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,

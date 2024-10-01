@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   tile: {
-    backgroundColor: "#6a11cb",
+    backgroundColor: "#707070",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
