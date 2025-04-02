@@ -216,7 +216,9 @@ const MyBedroomScreen = ({navigation}) => {
             onPress={() => {
               const newPowerState = !acPower;
               setAcPower(newPowerState);
-              sendCommand(newPowerState ? '/power/on' : '/power/off');
+              sendCommand(
+                newPowerState ? `/temp/set/${temperature}` : '/power/off',
+              );
             }}>
             <Icon
               name={acPower ? 'power' : 'power'}
