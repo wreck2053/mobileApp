@@ -726,22 +726,22 @@ private fun TemperatureSlider(
     val progress = (temperature - 17) / 13f
 
     Box(
-        modifier = modifier.height(56.dp),
+        modifier = modifier.height(50.dp),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(12.dp)
-                .clip(RoundedCornerShape(6.dp))
+                .height(18.dp)
+                .clip(RoundedCornerShape(9.dp))
                 .background(Esp32Palette.Stroke),
         )
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .fillMaxWidth(progress)
-                .height(12.dp)
-                .clip(RoundedCornerShape(6.dp))
+                .height(18.dp)
+                .clip(RoundedCornerShape(9.dp))
                 .background(Esp32Palette.Accent),
         )
         Slider(
@@ -758,6 +758,15 @@ private fun TemperatureSlider(
                 activeTickColor = Color.Transparent,
                 inactiveTickColor = Color.Transparent,
             ),
+            thumb = {
+                Box(
+                    modifier = Modifier
+                        .size(width = 4.dp, height = 28.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Esp32Palette.AccentSoft),
+                )
+            },
+            track = {},
         )
     }
 }
@@ -770,10 +779,10 @@ private fun StepButton(
 ) {
     Box(
         modifier = Modifier
-            .size(width = 56.dp, height = 56.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .size(width = 50.dp, height = 50.dp)
+            .clip(RoundedCornerShape(13.dp))
             .background(Color(0xFF160F0C))
-            .border(1.25.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(14.dp))
+            .border(1.25.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(13.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -781,7 +790,7 @@ private fun StepButton(
             painter = painterResource(iconRes),
             contentDescription = description,
             tint = Esp32Palette.AccentSoft,
-            modifier = Modifier.size(29.dp),
+            modifier = Modifier.size(23.dp),
         )
     }
 }
@@ -982,7 +991,7 @@ private fun WideCommandCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         cornerRadius = 20,
-        contentPadding = 10,
+        contentPadding = 16,
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
