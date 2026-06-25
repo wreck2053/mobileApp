@@ -24,6 +24,7 @@ object Esp32Commands {
     const val TOGGLE_FAN = "/toggle-fan"
     const val TOGGLE_NIGHT_LAMP = "/toggle-nl"
     const val POWER_OFF = "/power/off"
+    const val PRESET_AC = "/preset-ac"
     const val MODE_COOL = "/mode/cool"
     const val STATE_TURBO = "/state/turbo"
     const val STATE_LED = "/state/led"

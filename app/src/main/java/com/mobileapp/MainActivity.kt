@@ -12,17 +12,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -94,6 +92,7 @@ private enum class ControlIcon {
     FAN,
     POWER,
     COOL,
+    PRESET,
     TURBO,
     SWING,
     LED,
@@ -176,6 +175,10 @@ private fun Esp32ControllerApp() {
                     acPower = true
                     sendCommand("Cool", Esp32Commands.MODE_COOL)
                 },
+                onPreset = {
+                    acPower = true
+                    sendCommand("Preset", Esp32Commands.PRESET_AC)
+                },
                 onTurbo = { sendCommand("Turbo", Esp32Commands.STATE_TURBO) },
                 onLed = { sendCommand("LED", Esp32Commands.STATE_LED) },
                 onSwing = { sendCommand("Swing", Esp32Commands.STATE_SWING) },
@@ -221,6 +224,7 @@ private fun ControllerScreen(
     onTemperatureChange: (Int) -> Unit,
     onTemperatureCommit: () -> Unit,
     onCool: () -> Unit,
+    onPreset: () -> Unit,
     onTurbo: () -> Unit,
     onLed: () -> Unit,
     onSwing: () -> Unit,
@@ -230,9 +234,9 @@ private fun ControllerScreen(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
+            .navigationBarsPadding()
             .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(11.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Header(lastStatus = lastStatus, activeCommand = activeCommand)
 
@@ -268,6 +272,7 @@ private fun ControllerScreen(
             onTemperatureChange = onTemperatureChange,
             onTemperatureCommit = onTemperatureCommit,
             onCool = onCool,
+            onPreset = onPreset,
             onTurbo = onTurbo,
             onLed = onLed,
             onSwing = onSwing,
@@ -280,8 +285,6 @@ private fun ControllerScreen(
             icon = ControlIcon.NIGHT_LAMP,
             onClick = onNightLamp,
         )
-
-        Spacer(modifier = Modifier.height(4.dp))
     }
 }
 
@@ -308,7 +311,7 @@ private fun Header(
                 IconBadge(icon = ControlIcon.CHIP, sizeDp = 46, cornerRadiusDp = 16, vivid = true)
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "BEDROOM",
+                        text = "ESP32",
                         color = Esp32Palette.Bone,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
@@ -370,6 +373,7 @@ private fun AcPanel(
     onTemperatureChange: (Int) -> Unit,
     onTemperatureCommit: () -> Unit,
     onCool: () -> Unit,
+    onPreset: () -> Unit,
     onTurbo: () -> Unit,
     onLed: () -> Unit,
     onSwing: () -> Unit,
@@ -416,6 +420,7 @@ private fun AcPanel(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 ActionTile("Cool", ControlIcon.COOL, onCool, Modifier.weight(1f))
+                ActionTile("Preset", ControlIcon.PRESET, onPreset, Modifier.weight(1f))
                 ActionTile("Turbo", ControlIcon.TURBO, onTurbo, Modifier.weight(1f))
             }
 
@@ -635,24 +640,26 @@ private fun ActionTile(
 ) {
     Box(
         modifier = modifier
-            .height(58.dp)
+            .height(52.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFF16120F))
             .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
+            .padding(horizontal = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
         ) {
-            IconBadge(icon = icon, compact = true)
+            IconBadge(icon = icon, compact = true, sizeDp = 26, cornerRadiusDp = 9)
             Text(
                 text = label,
                 color = Esp32Palette.Muted,
-                fontSize = 15.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -775,6 +782,17 @@ private fun DrawControlIcon(
                 drawLine(tint, Offset(w * 0.5f, h * 0.12f), Offset(w * 0.5f, h * 0.88f), strokeWidth = w * 0.09f)
                 drawLine(tint, Offset(w * 0.17f, h * 0.31f), Offset(w * 0.83f, h * 0.69f), strokeWidth = w * 0.09f)
                 drawLine(tint, Offset(w * 0.83f, h * 0.31f), Offset(w * 0.17f, h * 0.69f), strokeWidth = w * 0.09f)
+            }
+            ControlIcon.PRESET -> {
+                drawRoundRect(
+                    color = tint,
+                    topLeft = Offset(w * 0.18f, h * 0.22f),
+                    size = Size(w * 0.64f, h * 0.42f),
+                    style = stroke,
+                )
+                drawLine(tint, Offset(w * 0.34f, h * 0.76f), Offset(w * 0.66f, h * 0.76f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.42f, h * 0.64f), Offset(w * 0.42f, h * 0.76f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.58f, h * 0.64f), Offset(w * 0.58f, h * 0.76f), strokeWidth = w * 0.09f)
             }
             ControlIcon.TURBO -> {
                 val path = Path().apply {
