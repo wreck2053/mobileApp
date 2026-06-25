@@ -25,13 +25,13 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Air
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.FormatColorFill
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.Memory
-import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.ModeFan
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.SwapVert
@@ -353,7 +353,7 @@ private fun ControllerScreen(
             onLed = onLed,
             onSwing = onSwing,
             onFanSpeed = onFanSpeed,
-            modifier = Modifier.weight(3.5f),
+            modifier = Modifier.weight(3.6f),
         )
 
         WideCommandCard(
@@ -361,7 +361,7 @@ private fun ControllerScreen(
             detail = "Toggle bedside glow",
             icon = ControlIcon.NIGHT_LAMP,
             onClick = onNightLamp,
-            modifier = Modifier.weight(0.85f),
+            modifier = Modifier.weight(0.75f),
         )
     }
 }
@@ -599,8 +599,6 @@ private fun AcPanel(
 
             TemperatureCard(
                 temperature = temperature,
-                acPower = acPower,
-                acMode = acMode,
                 fanSpeed = fanSpeed,
                 onTemperatureChange = onTemperatureChange,
                 onTemperatureCommit = onTemperatureCommit,
@@ -635,8 +633,6 @@ private fun AcPanel(
 @Composable
 private fun TemperatureCard(
     temperature: Int,
-    acPower: Boolean,
-    acMode: String,
     fanSpeed: FanSpeed,
     onTemperatureChange: (Int) -> Unit,
     onTemperatureCommit: () -> Unit,
@@ -645,7 +641,7 @@ private fun TemperatureCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(132.dp)
+            .height(144.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.verticalGradient(
@@ -656,7 +652,7 @@ private fun TemperatureCard(
                 ),
             )
             .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(20.dp))
-            .padding(14.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -679,9 +675,9 @@ private fun TemperatureCard(
                         Text(
                             text = temperature.toString(),
                             color = Esp32Palette.Bone,
-                            fontSize = 56.sp,
+                            fontSize = 60.sp,
                             fontWeight = FontWeight.Light,
-                            lineHeight = 54.sp,
+                            lineHeight = 58.sp,
                         )
                         Text(
                             text = "\u00B0C",
@@ -694,16 +690,16 @@ private fun TemperatureCard(
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = if (acPower) acMode.uppercase() else "STANDBY",
-                        color = if (acPower) Esp32Palette.Cyan else Esp32Palette.Muted,
-                        fontSize = 11.sp,
+                        text = "${fanSpeed.label.uppercase()} FAN",
+                        color = Esp32Palette.Bone,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.2.sp,
                     )
                     Text(
-                        text = "${fanSpeed.label.uppercase()} FAN  |  17-30",
+                        text = "17 - 30 \u00B0C",
                         color = Esp32Palette.Muted,
-                        fontSize = 9.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -747,10 +743,10 @@ private fun StepButton(
 ) {
     Box(
         modifier = Modifier
-            .size(width = 48.dp, height = 38.dp)
-            .clip(RoundedCornerShape(13.dp))
-            .background(Esp32Palette.Night)
-            .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(13.dp))
+            .size(width = 56.dp, height = 44.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color(0xFF160F0C))
+            .border(1.25.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -758,7 +754,7 @@ private fun StepButton(
             imageVector = icon,
             contentDescription = description,
             tint = Esp32Palette.AccentSoft,
-            modifier = Modifier.size(21.dp),
+            modifier = Modifier.size(27.dp),
         )
     }
 }
@@ -959,7 +955,7 @@ private fun WideCommandCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         cornerRadius = 20,
-        contentPadding = 14,
+        contentPadding = 10,
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -1031,8 +1027,8 @@ private fun ControlIcon.imageVector(): ImageVector =
     when (this) {
         ControlIcon.CHIP -> Icons.Rounded.Memory
         ControlIcon.LIGHT -> Icons.Rounded.Lightbulb
-        ControlIcon.COLOR -> Icons.Rounded.Palette
-        ControlIcon.FAN -> Icons.Rounded.Air
+        ControlIcon.COLOR -> Icons.Rounded.FormatColorFill
+        ControlIcon.FAN -> Icons.Rounded.ModeFan
         ControlIcon.POWER -> Icons.Rounded.PowerSettingsNew
         ControlIcon.COOL -> Icons.Rounded.AcUnit
         ControlIcon.PRESET -> Icons.Rounded.Tune
