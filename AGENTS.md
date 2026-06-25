@@ -5,3 +5,4 @@
 # Build and Validation
 
 - Use the GitHub Actions Android workflow for builds and validation.
+- After a successful build, download the generated APK artifact into the workspace and provide its local path.

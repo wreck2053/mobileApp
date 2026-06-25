@@ -143,6 +143,7 @@ private fun Esp32ControllerApp() {
         var connected by remember { mutableStateOf(false) }
         var lastStatus by remember { mutableStateOf("READY") }
         var activeCommand by remember { mutableStateOf<String?>(null) }
+        var commandRevision by remember { mutableIntStateOf(0) }
 
         fun applyState(state: Esp32State) {
             lightPower = state.light
@@ -158,36 +159,54 @@ private fun Esp32ControllerApp() {
         }
 
         fun syncState(showFailure: Boolean = false) {
+            if (activeCommand != null) return
+            val syncRevision = commandRevision
             scope.launch {
                 val result = client.loadState()
                 result.onSuccess { state ->
-                    applyState(state)
-                    if (lastStatus == "READY" || lastStatus == "OFFLINE") {
-                        lastStatus = "Synced"
+                    if (syncRevision == commandRevision) {
+                        applyState(state)
+                        if (lastStatus == "READY" || lastStatus == "OFFLINE") {
+                            lastStatus = "Synced"
+                        }
                     }
                 }.onFailure {
-                    connected = false
-                    if (showFailure) {
-                        lastStatus = "OFFLINE"
+                    if (syncRevision == commandRevision) {
+                        connected = false
+                        if (showFailure) {
+                            lastStatus = "OFFLINE"
+                        }
                     }
                 }
             }
         }
 
         fun sendCommand(label: String, path: String) {
+            val revision = commandRevision + 1
+            commandRevision = revision
             activeCommand = label
             scope.launch {
                 val result = client.send(path)
                 if (result.isSuccess) {
-                    lastStatus = "$label sent"
+                    if (revision == commandRevision) {
+                        lastStatus = "$label sent"
+                    }
                     delay(300)
-                    client.loadState().onSuccess(::applyState)
+                    client.loadState().onSuccess { state ->
+                        if (revision == commandRevision) {
+                            applyState(state)
+                        }
+                    }
                 } else {
                     val message = result.exceptionOrNull()?.message ?: "Network error"
-                    lastStatus = "$label failed"
-                    snackbarHostState.showSnackbar("$label failed: $message")
+                    if (revision == commandRevision) {
+                        lastStatus = "$label failed"
+                        snackbarHostState.showSnackbar("$label failed: $message")
+                    }
                 }
-                activeCommand = null
+                if (revision == commandRevision) {
+                    activeCommand = null
+                }
             }
         }
 
@@ -786,10 +805,10 @@ private fun StepButton(
 ) {
     Box(
         modifier = Modifier
-            .size(44.dp)
-            .clip(RoundedCornerShape(11.dp))
+            .size(35.dp)
+            .clip(RoundedCornerShape(9.dp))
             .background(Color(0xFF160F0C))
-            .border(1.25.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(11.dp))
+            .border(1.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(9.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -797,7 +816,7 @@ private fun StepButton(
             imageVector = icon,
             contentDescription = description,
             tint = Esp32Palette.AccentSoft,
-            modifier = Modifier.size(21.dp),
+            modifier = Modifier.size(17.dp),
         )
     }
 }
