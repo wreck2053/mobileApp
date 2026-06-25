@@ -14,11 +14,21 @@ enum class FanSpeed(
             MEDIUM -> HIGH
             HIGH -> LOW
         }
+
+    companion object {
+        fun fromLevel(level: Int): FanSpeed =
+            when (level) {
+                2 -> MEDIUM
+                3 -> HIGH
+                else -> LOW
+            }
+    }
 }
 
 object Esp32Commands {
     const val BASE_URL = "http://192.168.0.108/"
 
+    const val API_STATE = "/api/state"
     const val TOGGLE_LIGHT = "/toggle-light"
     const val NEXT_COLOR = "/next-color"
     const val TOGGLE_FAN = "/toggle-fan"

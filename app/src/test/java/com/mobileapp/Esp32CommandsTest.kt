@@ -19,6 +19,10 @@ class Esp32CommandsTest {
             "http://192.168.0.108/preset-ac",
             Esp32Commands.urlFor(Esp32Commands.PRESET_AC),
         )
+        assertEquals(
+            "http://192.168.0.108/api/state",
+            Esp32Commands.urlFor(Esp32Commands.API_STATE),
+        )
     }
 
     @Test
@@ -39,5 +43,9 @@ class Esp32CommandsTest {
         assertEquals(FanSpeed.HIGH, FanSpeed.MEDIUM.next())
         assertEquals(FanSpeed.LOW, FanSpeed.HIGH.next())
         assertEquals("/fan/high", Esp32Commands.fan(FanSpeed.HIGH))
+        assertEquals(FanSpeed.LOW, FanSpeed.fromLevel(1))
+        assertEquals(FanSpeed.MEDIUM, FanSpeed.fromLevel(2))
+        assertEquals(FanSpeed.HIGH, FanSpeed.fromLevel(3))
+        assertEquals(FanSpeed.LOW, FanSpeed.fromLevel(0))
     }
 }

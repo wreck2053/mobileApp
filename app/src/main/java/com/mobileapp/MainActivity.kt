@@ -30,6 +30,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -117,8 +119,45 @@ private fun Esp32ControllerApp() {
         var temperature by remember { mutableIntStateOf(24) }
         var fanSpeed by remember { mutableStateOf(FanSpeed.LOW) }
         var acPower by remember { mutableStateOf(false) }
+        var lightPower by remember { mutableStateOf(false) }
+        var roomFanPower by remember { mutableStateOf(false) }
+        var acMode by remember { mutableStateOf("cool") }
+        var swingOn by remember { mutableStateOf(false) }
+        var ledOn by remember { mutableStateOf(false) }
+        var turboOn by remember { mutableStateOf(false) }
+        var connected by remember { mutableStateOf(false) }
         var lastStatus by remember { mutableStateOf("READY") }
         var activeCommand by remember { mutableStateOf<String?>(null) }
+
+        fun applyState(state: Esp32State) {
+            lightPower = state.light
+            roomFanPower = state.fan
+            connected = state.connected
+            acPower = state.ac.power
+            acMode = state.ac.mode
+            temperature = state.ac.temperature
+            fanSpeed = FanSpeed.fromLevel(state.ac.fanLevel)
+            swingOn = state.ac.swing
+            ledOn = state.ac.led
+            turboOn = state.ac.turbo
+        }
+
+        fun syncState(showFailure: Boolean = false) {
+            scope.launch {
+                val result = client.loadState()
+                result.onSuccess { state ->
+                    applyState(state)
+                    if (lastStatus == "READY" || lastStatus == "OFFLINE") {
+                        lastStatus = "Synced"
+                    }
+                }.onFailure {
+                    connected = false
+                    if (showFailure) {
+                        lastStatus = "OFFLINE"
+                    }
+                }
+            }
+        }
 
         fun sendCommand(label: String, path: String) {
             activeCommand = label
@@ -126,12 +165,22 @@ private fun Esp32ControllerApp() {
                 val result = client.send(path)
                 if (result.isSuccess) {
                     lastStatus = "$label sent"
+                    delay(300)
+                    client.loadState().onSuccess(::applyState)
                 } else {
                     val message = result.exceptionOrNull()?.message ?: "Network error"
                     lastStatus = "$label failed"
                     snackbarHostState.showSnackbar("$label failed: $message")
                 }
                 activeCommand = null
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            syncState(showFailure = true)
+            while (true) {
+                delay(5_000)
+                syncState()
             }
         }
 
@@ -152,6 +201,13 @@ private fun Esp32ControllerApp() {
                 temperature = temperature,
                 fanSpeed = fanSpeed,
                 acPower = acPower,
+                lightPower = lightPower,
+                roomFanPower = roomFanPower,
+                connected = connected,
+                acMode = acMode,
+                swingOn = swingOn,
+                ledOn = ledOn,
+                turboOn = turboOn,
                 lastStatus = lastStatus,
                 activeCommand = activeCommand,
                 onLight = { sendCommand("Light", Esp32Commands.TOGGLE_LIGHT) },
@@ -170,6 +226,11 @@ private fun Esp32ControllerApp() {
                 onTemperatureCommit = {
                     acPower = true
                     sendCommand("Temperature", Esp32Commands.temperature(temperature))
+                },
+                onTemperatureStep = { nextTemperature ->
+                    temperature = nextTemperature
+                    acPower = true
+                    sendCommand("Temperature", Esp32Commands.temperature(nextTemperature))
                 },
                 onCool = {
                     acPower = true
@@ -214,6 +275,13 @@ private fun ControllerScreen(
     temperature: Int,
     fanSpeed: FanSpeed,
     acPower: Boolean,
+    lightPower: Boolean,
+    roomFanPower: Boolean,
+    connected: Boolean,
+    acMode: String,
+    swingOn: Boolean,
+    ledOn: Boolean,
+    turboOn: Boolean,
     lastStatus: String,
     activeCommand: String?,
     onLight: () -> Unit,
@@ -223,6 +291,7 @@ private fun ControllerScreen(
     onPower: () -> Unit,
     onTemperatureChange: (Int) -> Unit,
     onTemperatureCommit: () -> Unit,
+    onTemperatureStep: (Int) -> Unit,
     onCool: () -> Unit,
     onPreset: () -> Unit,
     onTurbo: () -> Unit,
@@ -238,7 +307,7 @@ private fun ControllerScreen(
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Header(lastStatus = lastStatus, activeCommand = activeCommand)
+        Header(connected = connected, lastStatus = lastStatus, activeCommand = activeCommand)
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -247,18 +316,21 @@ private fun ControllerScreen(
             CommandPill(
                 label = "Light",
                 icon = ControlIcon.LIGHT,
+                active = lightPower,
                 onClick = onLight,
                 modifier = Modifier.weight(1f),
             )
             CommandPill(
                 label = "Color",
                 icon = ControlIcon.COLOR,
+                active = lightPower,
                 onClick = onColor,
                 modifier = Modifier.weight(1f),
             )
             CommandPill(
                 label = "Fan",
                 icon = ControlIcon.FAN,
+                active = roomFanPower,
                 onClick = onFan,
                 modifier = Modifier.weight(1f),
             )
@@ -268,9 +340,14 @@ private fun ControllerScreen(
             temperature = temperature,
             fanSpeed = fanSpeed,
             acPower = acPower,
+            acMode = acMode,
+            swingOn = swingOn,
+            ledOn = ledOn,
+            turboOn = turboOn,
             onPower = onPower,
             onTemperatureChange = onTemperatureChange,
             onTemperatureCommit = onTemperatureCommit,
+            onTemperatureStep = onTemperatureStep,
             onCool = onCool,
             onPreset = onPreset,
             onTurbo = onTurbo,
@@ -290,6 +367,7 @@ private fun ControllerScreen(
 
 @Composable
 private fun Header(
+    connected: Boolean,
     lastStatus: String,
     activeCommand: String?,
 ) {
@@ -338,10 +416,10 @@ private fun Header(
                         modifier = Modifier
                             .size(9.dp)
                             .clip(CircleShape)
-                            .background(Esp32Palette.Online),
+                            .background(if (connected) Esp32Palette.Online else Esp32Palette.Stroke),
                     )
                     Text(
-                        text = "ONLINE",
+                        text = if (connected) "ONLINE" else "OFFLINE",
                         color = Esp32Palette.Muted,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -369,9 +447,14 @@ private fun AcPanel(
     temperature: Int,
     fanSpeed: FanSpeed,
     acPower: Boolean,
+    acMode: String,
+    swingOn: Boolean,
+    ledOn: Boolean,
+    turboOn: Boolean,
     onPower: () -> Unit,
     onTemperatureChange: (Int) -> Unit,
     onTemperatureCommit: () -> Unit,
+    onTemperatureStep: (Int) -> Unit,
     onCool: () -> Unit,
     onPreset: () -> Unit,
     onTurbo: () -> Unit,
@@ -413,15 +496,16 @@ private fun AcPanel(
                 temperature = temperature,
                 onTemperatureChange = onTemperatureChange,
                 onTemperatureCommit = onTemperatureCommit,
+                onTemperatureStep = onTemperatureStep,
             )
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                ActionTile("Cool", ControlIcon.COOL, onCool, Modifier.weight(1f))
+                ActionTile("Cool", ControlIcon.COOL, onCool, Modifier.weight(1f), active = acMode.equals("cool", ignoreCase = true))
                 ActionTile("Preset", ControlIcon.PRESET, onPreset, Modifier.weight(1f))
-                ActionTile("Turbo", ControlIcon.TURBO, onTurbo, Modifier.weight(1f))
+                ActionTile("Turbo", ControlIcon.TURBO, onTurbo, Modifier.weight(1f), active = turboOn)
             }
 
             FanSpeedSelector(
@@ -433,8 +517,8 @@ private fun AcPanel(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                ActionTile("Swing", ControlIcon.SWING, onSwing, Modifier.weight(1f))
-                ActionTile("LED", ControlIcon.LED, onLed, Modifier.weight(1f))
+                ActionTile("Swing", ControlIcon.SWING, onSwing, Modifier.weight(1f), active = swingOn)
+                ActionTile("LED", ControlIcon.LED, onLed, Modifier.weight(1f), active = ledOn)
             }
         }
     }
@@ -445,10 +529,12 @@ private fun TemperatureCard(
     temperature: Int,
     onTemperatureChange: (Int) -> Unit,
     onTemperatureCommit: () -> Unit,
+    onTemperatureStep: (Int) -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .height(190.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.verticalGradient(
@@ -461,60 +547,128 @@ private fun TemperatureCard(
             .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(20.dp))
             .padding(14.dp),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom,
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            TemperatureDial(temperature = temperature, modifier = Modifier.weight(1f))
+            Column(
+                modifier = Modifier.weight(0.85f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Column {
-                    Text(
-                        text = "TEMPERATURE",
-                        color = Esp32Palette.Muted,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 3.sp,
-                    )
-                    Row(verticalAlignment = Alignment.Top) {
-                        Text(
-                            text = temperature.toString(),
-                            color = Esp32Palette.Bone,
-                            fontSize = 54.sp,
-                            fontWeight = FontWeight.Light,
-                            lineHeight = 56.sp,
-                        )
-                        Text(
-                            text = "\u00B0",
-                            color = Esp32Palette.Accent,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 8.dp),
-                        )
-                    }
-                }
                 Text(
                     text = "17 - 30 C",
                     color = Esp32Palette.Muted,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                 )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    StepButton(label = "-", onClick = {
+                        onTemperatureStep((temperature - 1).coerceIn(17, 30))
+                    })
+                    StepButton(label = "+", onClick = {
+                        onTemperatureStep((temperature + 1).coerceIn(17, 30))
+                    })
+                }
+                Slider(
+                    value = temperature.toFloat(),
+                    onValueChange = { onTemperatureChange(it.roundToInt().coerceIn(17, 30)) },
+                    onValueChangeFinished = onTemperatureCommit,
+                    valueRange = 17f..30f,
+                    steps = 12,
+                    colors = SliderDefaults.colors(
+                        thumbColor = Esp32Palette.Accent,
+                        activeTrackColor = Esp32Palette.Accent,
+                        inactiveTrackColor = Esp32Palette.Stroke,
+                        activeTickColor = Color.Transparent,
+                        inactiveTickColor = Color.Transparent,
+                    ),
+                )
             }
+        }
+    }
+}
 
-            Slider(
-                value = temperature.toFloat(),
-                onValueChange = { onTemperatureChange(it.roundToInt().coerceIn(17, 30)) },
-                onValueChangeFinished = onTemperatureCommit,
-                valueRange = 17f..30f,
-                steps = 12,
-                colors = SliderDefaults.colors(
-                    thumbColor = Esp32Palette.Accent,
-                    activeTrackColor = Esp32Palette.Accent,
-                    inactiveTrackColor = Esp32Palette.Stroke,
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent,
-                ),
+@Composable
+private fun TemperatureDial(
+    temperature: Int,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.size(156.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokeWidth = size.width * 0.075f
+            val sweep = ((temperature - 17) / 13f).coerceIn(0f, 1f) * 270f
+            drawArc(
+                color = Esp32Palette.Stroke.copy(alpha = 0.55f),
+                startAngle = 135f,
+                sweepAngle = 270f,
+                useCenter = false,
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
+            )
+            drawArc(
+                color = Esp32Palette.Accent,
+                startAngle = 135f,
+                sweepAngle = sweep,
+                useCenter = false,
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
             )
         }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = temperature.toString(),
+                color = Esp32Palette.Bone,
+                fontSize = 46.sp,
+                fontWeight = FontWeight.Light,
+                lineHeight = 48.sp,
+            )
+            Text(
+                text = "TEMP",
+                color = Esp32Palette.Muted,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 2.sp,
+            )
+        }
+        Text(
+            text = "\u00B0",
+            color = Esp32Palette.Accent,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(start = 68.dp, bottom = 34.dp),
+        )
+    }
+}
+
+@Composable
+private fun StepButton(
+    label: String,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(width = 48.dp, height = 38.dp)
+            .clip(RoundedCornerShape(13.dp))
+            .background(Esp32Palette.Night)
+            .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(13.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = Esp32Palette.AccentSoft,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Black,
+        )
     }
 }
 
@@ -523,14 +677,7 @@ private fun FanSpeedSelector(
     selected: FanSpeed,
     onClick: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = "FAN",
-            color = Esp32Palette.Muted,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 3.sp,
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -597,6 +744,7 @@ private fun PowerButton(
 private fun CommandPill(
     label: String,
     icon: ControlIcon,
+    active: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -606,7 +754,11 @@ private fun CommandPill(
             .clip(RoundedCornerShape(18.dp))
             .background(
                 Brush.horizontalGradient(
-                    listOf(Esp32Palette.CopperDark, Esp32Palette.Copper),
+                    if (active) {
+                        listOf(Esp32Palette.Copper, Esp32Palette.Accent.copy(alpha = 0.38f))
+                    } else {
+                        listOf(Esp32Palette.CopperDark, Esp32Palette.Copper)
+                    },
                 ),
             )
             .border(1.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(18.dp))
@@ -637,13 +789,18 @@ private fun ActionTile(
     icon: ControlIcon,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    active: Boolean = false,
 ) {
     Box(
         modifier = modifier
             .height(52.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF16120F))
-            .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(16.dp))
+            .background(if (active) Esp32Palette.CopperDark else Color(0xFF16120F))
+            .border(
+                1.dp,
+                if (active) Esp32Palette.Accent.copy(alpha = 0.72f) else Esp32Palette.Stroke,
+                RoundedCornerShape(16.dp),
+            )
             .clickable(onClick = onClick)
             .padding(horizontal = 6.dp),
         contentAlignment = Alignment.Center,
