@@ -305,7 +305,7 @@ private fun ControllerScreen(
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Header(connected = connected, lastStatus = lastStatus, activeCommand = activeCommand)
 
@@ -324,6 +324,7 @@ private fun ControllerScreen(
                 label = "Color",
                 icon = ControlIcon.COLOR,
                 active = lightPower,
+                enabled = lightPower,
                 onClick = onColor,
                 modifier = Modifier.weight(1f),
             )
@@ -372,9 +373,11 @@ private fun Header(
     activeCommand: String?,
 ) {
     PanelFrame(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(92.dp),
         cornerRadius = 24,
-        contentPadding = 14,
+        contentPadding = 16,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -393,7 +396,7 @@ private fun Header(
                         color = Esp32Palette.Bone,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
-                        letterSpacing = 4.sp,
+                        letterSpacing = 1.5.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -467,7 +470,7 @@ private fun AcPanel(
         cornerRadius = 22,
         contentPadding = 14,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -534,7 +537,7 @@ private fun TemperatureCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(190.dp)
+            .height(126.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.verticalGradient(
@@ -547,35 +550,47 @@ private fun TemperatureCard(
             .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(20.dp))
             .padding(14.dp),
     ) {
-        Row(
+        Column(
             modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            TemperatureDial(temperature = temperature, modifier = Modifier.weight(1f))
-            Column(
-                modifier = Modifier.weight(0.85f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
+                Row(verticalAlignment = Alignment.Top) {
+                    Text(
+                        text = temperature.toString(),
+                        color = Esp32Palette.Bone,
+                        fontSize = 42.sp,
+                        fontWeight = FontWeight.Light,
+                        lineHeight = 44.sp,
+                    )
+                    Text(
+                        text = "\u00B0",
+                        color = Esp32Palette.Accent,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
                 Text(
                     text = "17 - 30 C",
                     color = Esp32Palette.Muted,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                 )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    StepButton(label = "-", onClick = {
-                        onTemperatureStep((temperature - 1).coerceIn(17, 30))
-                    })
-                    StepButton(label = "+", onClick = {
-                        onTemperatureStep((temperature + 1).coerceIn(17, 30))
-                    })
-                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                StepButton(label = "-", onClick = {
+                    onTemperatureStep((temperature - 1).coerceIn(17, 30))
+                })
                 Slider(
+                    modifier = Modifier.weight(1f),
                     value = temperature.toFloat(),
                     onValueChange = { onTemperatureChange(it.roundToInt().coerceIn(17, 30)) },
                     onValueChangeFinished = onTemperatureCommit,
@@ -589,63 +604,10 @@ private fun TemperatureCard(
                         inactiveTickColor = Color.Transparent,
                     ),
                 )
+                StepButton(label = "+", onClick = {
+                    onTemperatureStep((temperature + 1).coerceIn(17, 30))
+                })
             }
-        }
-    }
-}
-
-@Composable
-private fun TemperatureDial(
-    temperature: Int,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier.size(156.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = size.width * 0.075f
-            val sweep = ((temperature - 17) / 13f).coerceIn(0f, 1f) * 270f
-            drawArc(
-                color = Esp32Palette.Stroke.copy(alpha = 0.55f),
-                startAngle = 135f,
-                sweepAngle = 270f,
-                useCenter = false,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
-            )
-            drawArc(
-                color = Esp32Palette.Accent,
-                startAngle = 135f,
-                sweepAngle = sweep,
-                useCenter = false,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
-            )
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = temperature.toString(),
-                color = Esp32Palette.Bone,
-                fontSize = 46.sp,
-                fontWeight = FontWeight.Light,
-                lineHeight = 48.sp,
-            )
-            Text(
-                text = "TEMP",
-                color = Esp32Palette.Muted,
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 2.sp,
-            )
-        }
-        Text(
-            text = "\u00B0",
-            color = Esp32Palette.Accent,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(start = 68.dp, bottom = 34.dp),
-        )
     }
 }
 
@@ -745,40 +707,63 @@ private fun CommandPill(
     label: String,
     icon: ControlIcon,
     active: Boolean = false,
+    enabled: Boolean = true,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val backgroundColors = when {
+        active -> listOf(Esp32Palette.Copper, Color(0xFF8A421D))
+        enabled -> listOf(Color(0xFF1D1714), Color(0xFF120E0C))
+        else -> listOf(Color(0xFF120F0D), Color(0xFF0D0B0A))
+    }
+    val borderColor = when {
+        active -> Esp32Palette.Accent
+        enabled -> Esp32Palette.Stroke
+        else -> Esp32Palette.Stroke.copy(alpha = 0.45f)
+    }
+    val contentColor = when {
+        active -> Esp32Palette.Bone
+        enabled -> Esp32Palette.Muted
+        else -> Esp32Palette.Muted.copy(alpha = 0.42f)
+    }
+
     Box(
         modifier = modifier
             .height(66.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(
-                Brush.horizontalGradient(
-                    if (active) {
-                        listOf(Esp32Palette.Copper, Esp32Palette.Accent.copy(alpha = 0.38f))
-                    } else {
-                        listOf(Esp32Palette.CopperDark, Esp32Palette.Copper)
-                    },
-                ),
-            )
-            .border(1.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(18.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
+            .background(Brush.horizontalGradient(backgroundColors))
+            .border(1.dp, borderColor, RoundedCornerShape(18.dp))
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
         ) {
-            IconBadge(icon = icon)
+            IconBadge(
+                icon = icon,
+                sizeDp = 30,
+                cornerRadiusDp = 10,
+                active = active,
+                enabled = enabled,
+            )
             Text(
                 text = label,
-                color = Esp32Palette.Bone,
-                fontSize = 16.sp,
+                color = contentColor,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Black,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (label != "Color") {
+                Box(
+                    modifier = Modifier
+                        .size(7.dp)
+                        .clip(CircleShape)
+                        .background(if (active) Esp32Palette.Online else Esp32Palette.Stroke),
+                )
+            }
         }
     }
 }
@@ -867,22 +852,35 @@ private fun IconBadge(
     sizeDp: Int = if (compact) 30 else 36,
     cornerRadiusDp: Int = if (compact) 10 else 12,
     vivid: Boolean = false,
+    active: Boolean = false,
+    enabled: Boolean = true,
 ) {
+    val badgeColor = when {
+        vivid -> Esp32Palette.Red
+        active -> Esp32Palette.Accent
+        else -> Color(0xFF100C0A)
+    }
+    val iconColor = when {
+        vivid || active -> Color.White
+        enabled -> Esp32Palette.AccentSoft
+        else -> Esp32Palette.Muted.copy(alpha = 0.35f)
+    }
+
     Box(
         modifier = Modifier
             .size(sizeDp.dp)
             .clip(RoundedCornerShape(cornerRadiusDp.dp))
-            .background(if (vivid) Esp32Palette.Red else Color(0xFF100C0A))
+            .background(badgeColor)
             .border(
                 1.dp,
-                if (vivid) Color.White.copy(alpha = 0.12f) else Esp32Palette.Accent.copy(alpha = 0.65f),
+                if (vivid || active) Color.White.copy(alpha = 0.18f) else Esp32Palette.Accent.copy(alpha = 0.65f),
                 RoundedCornerShape(cornerRadiusDp.dp),
             ),
         contentAlignment = Alignment.Center,
     ) {
         DrawControlIcon(
             icon = icon,
-            tint = if (vivid) Color.White else Esp32Palette.AccentSoft,
+            tint = iconColor,
             modifier = Modifier.size((sizeDp * 0.58f).dp),
         )
     }
