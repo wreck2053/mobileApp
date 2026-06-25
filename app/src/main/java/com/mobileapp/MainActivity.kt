@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.FormatColorFill
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.PowerSettingsNew
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Toys
 import androidx.compose.material.icons.rounded.Tune
@@ -61,6 +63,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -667,8 +670,10 @@ private fun TemperatureCard(
                     Text(
                         text = temperature.toString(),
                         color = Esp32Palette.Bone,
-                        fontSize = 60.sp,
-                        fontWeight = FontWeight.Light,
+                        fontSize = 58.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = (-3).sp,
                         lineHeight = 58.sp,
                     )
                     Text(
@@ -700,7 +705,7 @@ private fun TemperatureCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                StepButton(iconRes = R.drawable.ic_temperature_minus_one, description = "Decrease temperature", onClick = {
+                StepButton(icon = Icons.Rounded.Remove, description = "Decrease temperature", onClick = {
                     onTemperatureStep((temperature - 1).coerceIn(17, 30))
                 })
                 TemperatureSlider(
@@ -709,7 +714,7 @@ private fun TemperatureCard(
                     onTemperatureChange = onTemperatureChange,
                     onTemperatureCommit = onTemperatureCommit,
                 )
-                StepButton(iconRes = R.drawable.ic_temperature_plus_one, description = "Increase temperature", onClick = {
+                StepButton(icon = Icons.Rounded.Add, description = "Increase temperature", onClick = {
                     onTemperatureStep((temperature + 1).coerceIn(17, 30))
                 })
             }
@@ -731,21 +736,6 @@ private fun TemperatureSlider(
         modifier = modifier.height(50.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(18.dp)
-                .clip(RoundedCornerShape(9.dp))
-                .background(Esp32Palette.Stroke),
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .fillMaxWidth(progress)
-                .height(18.dp)
-                .clip(RoundedCornerShape(9.dp))
-                .background(Esp32Palette.Accent),
-        )
         Slider(
             modifier = Modifier.fillMaxWidth(),
             value = temperature.toFloat(),
@@ -768,31 +758,46 @@ private fun TemperatureSlider(
                         .background(Esp32Palette.AccentSoft),
                 )
             },
-            track = {},
+            track = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(18.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(Esp32Palette.Stroke),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progress)
+                            .fillMaxHeight()
+                            .background(Esp32Palette.Accent),
+                    )
+                }
+            },
         )
     }
 }
 
 @Composable
 private fun StepButton(
-    iconRes: Int,
+    icon: ImageVector,
     description: String,
     onClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
-            .size(width = 50.dp, height = 50.dp)
-            .clip(RoundedCornerShape(13.dp))
+            .size(44.dp)
+            .clip(RoundedCornerShape(11.dp))
             .background(Color(0xFF160F0C))
-            .border(1.25.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(13.dp))
+            .border(1.25.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(11.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(iconRes),
+            imageVector = icon,
             contentDescription = description,
             tint = Esp32Palette.AccentSoft,
-            modifier = Modifier.size(23.dp),
+            modifier = Modifier.size(21.dp),
         )
     }
 }
