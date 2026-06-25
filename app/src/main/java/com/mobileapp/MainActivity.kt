@@ -608,6 +608,7 @@ private fun TemperatureCard(
                     onTemperatureStep((temperature + 1).coerceIn(17, 30))
                 })
             }
+        }
     }
 }
 
