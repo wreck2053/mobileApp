@@ -24,7 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.FormatColorFill
@@ -32,7 +31,6 @@ import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.PowerSettingsNew
-import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Toys
 import androidx.compose.material.icons.rounded.Tune
@@ -59,8 +57,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -663,30 +662,21 @@ private fun TemperatureCard(
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column {
+                Row(verticalAlignment = Alignment.Top) {
                     Text(
-                        text = "TARGET TEMPERATURE",
-                        color = Esp32Palette.Muted,
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.4.sp,
+                        text = temperature.toString(),
+                        color = Esp32Palette.Bone,
+                        fontSize = 60.sp,
+                        fontWeight = FontWeight.Light,
+                        lineHeight = 58.sp,
                     )
-                    Row(verticalAlignment = Alignment.Top) {
-                        Text(
-                            text = temperature.toString(),
-                            color = Esp32Palette.Bone,
-                            fontSize = 60.sp,
-                            fontWeight = FontWeight.Light,
-                            lineHeight = 58.sp,
-                        )
-                        Text(
-                            text = "\u00B0C",
-                            color = Esp32Palette.Accent,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
+                    Text(
+                        text = "\u00B0C",
+                        color = Esp32Palette.Accent,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
@@ -709,25 +699,16 @@ private fun TemperatureCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                StepButton(icon = Icons.Rounded.Remove, description = "Decrease temperature", onClick = {
+                StepButton(iconRes = R.drawable.ic_temperature_minus_one, description = "Decrease temperature", onClick = {
                     onTemperatureStep((temperature - 1).coerceIn(17, 30))
                 })
-                Slider(
+                TemperatureSlider(
                     modifier = Modifier.weight(1f),
-                    value = temperature.toFloat(),
-                    onValueChange = { onTemperatureChange(it.roundToInt().coerceIn(17, 30)) },
-                    onValueChangeFinished = onTemperatureCommit,
-                    valueRange = 17f..30f,
-                    steps = 12,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Esp32Palette.Accent,
-                        activeTrackColor = Esp32Palette.Accent,
-                        inactiveTrackColor = Esp32Palette.Stroke,
-                        activeTickColor = Color.Transparent,
-                        inactiveTickColor = Color.Transparent,
-                    ),
+                    temperature = temperature,
+                    onTemperatureChange = onTemperatureChange,
+                    onTemperatureCommit = onTemperatureCommit,
                 )
-                StepButton(icon = Icons.Rounded.Add, description = "Increase temperature", onClick = {
+                StepButton(iconRes = R.drawable.ic_temperature_plus_one, description = "Increase temperature", onClick = {
                     onTemperatureStep((temperature + 1).coerceIn(17, 30))
                 })
             }
@@ -736,14 +717,60 @@ private fun TemperatureCard(
 }
 
 @Composable
+private fun TemperatureSlider(
+    temperature: Int,
+    onTemperatureChange: (Int) -> Unit,
+    onTemperatureCommit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val progress = (temperature - 17) / 13f
+
+    Box(
+        modifier = modifier.height(56.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(12.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(Esp32Palette.Stroke),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .fillMaxWidth(progress)
+                .height(12.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(Esp32Palette.Accent),
+        )
+        Slider(
+            modifier = Modifier.fillMaxWidth(),
+            value = temperature.toFloat(),
+            onValueChange = { onTemperatureChange(it.roundToInt().coerceIn(17, 30)) },
+            onValueChangeFinished = onTemperatureCommit,
+            valueRange = 17f..30f,
+            steps = 12,
+            colors = SliderDefaults.colors(
+                thumbColor = Esp32Palette.Accent,
+                activeTrackColor = Color.Transparent,
+                inactiveTrackColor = Color.Transparent,
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent,
+            ),
+        )
+    }
+}
+
+@Composable
 private fun StepButton(
-    icon: ImageVector,
+    iconRes: Int,
     description: String,
     onClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
-            .size(width = 56.dp, height = 44.dp)
+            .size(width = 56.dp, height = 56.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(Color(0xFF160F0C))
             .border(1.25.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(14.dp))
@@ -751,10 +778,10 @@ private fun StepButton(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = icon,
+            painter = painterResource(iconRes),
             contentDescription = description,
             tint = Esp32Palette.AccentSoft,
-            modifier = Modifier.size(27.dp),
+            modifier = Modifier.size(29.dp),
         )
     }
 }
@@ -1014,12 +1041,30 @@ private fun IconBadge(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = icon.imageVector(),
-            contentDescription = null,
-            tint = iconColor,
-            modifier = Modifier.size((sizeDp * 0.58f).dp),
-        )
+        val customIconRes = when (icon) {
+            ControlIcon.LIGHT -> if (active) R.drawable.ic_light_on else R.drawable.ic_light_off
+            ControlIcon.COLOR -> R.drawable.ic_color
+            ControlIcon.FAN -> if (active) R.drawable.ic_fan_on else R.drawable.ic_fan_off
+            ControlIcon.TURBO -> R.drawable.ic_turbo
+            ControlIcon.LED -> R.drawable.ic_led
+            else -> null
+        }
+
+        if (customIconRes != null) {
+            Icon(
+                painter = painterResource(customIconRes),
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.size((sizeDp * 0.58f).dp),
+            )
+        } else {
+            Icon(
+                imageVector = icon.imageVector(),
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.size((sizeDp * 0.58f).dp),
+            )
+        }
     }
 }
 
