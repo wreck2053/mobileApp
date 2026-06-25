@@ -35,6 +35,7 @@ import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Toys
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -717,6 +718,7 @@ private fun TemperatureCard(
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun TemperatureSlider(
     temperature: Int,
     onTemperatureChange: (Int) -> Unit,
