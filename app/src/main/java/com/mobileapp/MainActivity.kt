@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -315,10 +316,15 @@ private fun ControllerScreen(
             .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Header(connected = connected, lastStatus = lastStatus, activeCommand = activeCommand)
+        Header(
+            connected = connected,
+            lastStatus = lastStatus,
+            activeCommand = activeCommand,
+            modifier = Modifier.weight(1.3f),
+        )
 
         RoomControls(
             lightPower = lightPower,
@@ -326,6 +332,7 @@ private fun ControllerScreen(
             onLight = onLight,
             onColor = onColor,
             onFan = onFan,
+            modifier = Modifier.weight(1.4f),
         )
 
         AcPanel(
@@ -346,6 +353,7 @@ private fun ControllerScreen(
             onLed = onLed,
             onSwing = onSwing,
             onFanSpeed = onFanSpeed,
+            modifier = Modifier.weight(3.5f),
         )
 
         WideCommandCard(
@@ -353,6 +361,7 @@ private fun ControllerScreen(
             detail = "Toggle bedside glow",
             icon = ControlIcon.NIGHT_LAMP,
             onClick = onNightLamp,
+            modifier = Modifier.weight(0.85f),
         )
     }
 }
@@ -364,20 +373,28 @@ private fun RoomControls(
     onLight: () -> Unit,
     onColor: () -> Unit,
     onFan: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     PanelFrame(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(128.dp),
+        modifier = modifier.fillMaxWidth(),
         cornerRadius = 20,
-        contentPadding = 10,
+        contentPadding = 14,
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            Text(
+                text = "SWITCHES",
+                color = Esp32Palette.Muted,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 2.sp,
+            )
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 CommandPill(
@@ -385,7 +402,9 @@ private fun RoomControls(
                     icon = ControlIcon.LIGHT,
                     active = lightPower,
                     onClick = onLight,
-                    modifier = Modifier.width(132.dp),
+                    modifier = Modifier
+                        .width(132.dp)
+                        .fillMaxHeight(),
                 )
                 CommandPill(
                     label = "Color",
@@ -393,11 +412,15 @@ private fun RoomControls(
                     active = lightPower,
                     enabled = lightPower,
                     onClick = onColor,
-                    modifier = Modifier.width(132.dp),
+                    modifier = Modifier
+                        .width(132.dp)
+                        .fillMaxHeight(),
                 )
             }
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 horizontalArrangement = Arrangement.Center,
             ) {
                 CommandPill(
@@ -405,7 +428,9 @@ private fun RoomControls(
                     icon = ControlIcon.FAN,
                     active = roomFanPower,
                     onClick = onFan,
-                    modifier = Modifier.width(150.dp),
+                    modifier = Modifier
+                        .width(150.dp)
+                        .fillMaxHeight(),
                 )
             }
         }
@@ -417,20 +442,21 @@ private fun Header(
     connected: Boolean,
     lastStatus: String,
     activeCommand: String?,
+    modifier: Modifier = Modifier,
 ) {
     PanelFrame(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(116.dp),
+        modifier = modifier.fillMaxWidth(),
         cornerRadius = 24,
-        contentPadding = 14,
+        contentPadding = 18,
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
@@ -438,12 +464,12 @@ private fun Header(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(11.dp),
                 ) {
-                    IconBadge(icon = ControlIcon.CHIP, sizeDp = 52, cornerRadiusDp = 16, vivid = true)
+                    IconBadge(icon = ControlIcon.CHIP, sizeDp = 48, cornerRadiusDp = 15, vivid = true)
                     Column {
                         Text(
                             text = "ESP32",
                             color = Esp32Palette.Bone,
-                            fontSize = 25.sp,
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 0.5.sp,
                             maxLines = 1,
@@ -482,33 +508,24 @@ private fun Header(
                 }
             }
 
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Esp32Palette.Stroke.copy(alpha = 0.55f)),
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
+                    .height(30.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFF100D0B))
+                    .border(1.dp, Esp32Palette.Stroke.copy(alpha = 0.65f), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column {
-                    Text(
-                        text = "LOCAL ENDPOINT",
-                        color = Esp32Palette.Muted,
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
-                    )
-                    Text(
-                        text = Esp32Commands.BASE_URL,
-                        color = Esp32Palette.Bone,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                    )
-                }
+                Text(
+                    text = Esp32Commands.BASE_URL,
+                    color = Esp32Palette.Muted,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                )
                 Text(
                     text = activeCommand ?: lastStatus,
                     color = if (lastStatus.contains("failed", ignoreCase = true)) {
@@ -545,13 +562,17 @@ private fun AcPanel(
     onLed: () -> Unit,
     onSwing: () -> Unit,
     onFanSpeed: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     PanelFrame(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         cornerRadius = 22,
-        contentPadding = 12,
+        contentPadding = 14,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -842,7 +863,6 @@ private fun CommandPill(
 
     Box(
         modifier = modifier
-            .height(50.dp)
             .clip(RoundedCornerShape(18.dp))
             .background(Brush.horizontalGradient(backgroundColors))
             .border(1.dp, borderColor, RoundedCornerShape(18.dp))
@@ -932,17 +952,17 @@ private fun WideCommandCard(
     detail: String,
     icon: ControlIcon,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     PanelFrame(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(62.dp)
             .clickable(onClick = onClick),
         cornerRadius = 20,
-        contentPadding = 10,
+        contentPadding = 14,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
