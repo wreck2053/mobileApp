@@ -31,10 +31,10 @@ import androidx.compose.material.icons.rounded.FormatColorFill
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.Memory
-import androidx.compose.material.icons.rounded.ModeFan
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.SwapVert
+import androidx.compose.material.icons.rounded.Toys
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -1028,7 +1028,7 @@ private fun ControlIcon.imageVector(): ImageVector =
         ControlIcon.CHIP -> Icons.Rounded.Memory
         ControlIcon.LIGHT -> Icons.Rounded.Lightbulb
         ControlIcon.COLOR -> Icons.Rounded.FormatColorFill
-        ControlIcon.FAN -> Icons.Rounded.ModeFan
+        ControlIcon.FAN -> Icons.Rounded.Toys
         ControlIcon.POWER -> Icons.Rounded.PowerSettingsNew
         ControlIcon.COOL -> Icons.Rounded.AcUnit
         ControlIcon.PRESET -> Icons.Rounded.Tune
