@@ -11,6 +11,10 @@ class Esp32CommandsTest {
             "http://192.168.0.108/toggle-light",
             Esp32Commands.urlFor(Esp32Commands.TOGGLE_LIGHT),
         )
+        assertEquals(
+            "http://192.168.0.108/next-color",
+            Esp32Commands.urlFor(Esp32Commands.NEXT_COLOR),
+        )
     }
 
     @Test

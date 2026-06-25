@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -45,11 +46,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -84,6 +85,19 @@ private object Esp32Palette {
     val Danger = Color(0xFFFF5E57)
     val Online = Color(0xFF40D98A)
     val Cyan = Color(0xFF55D6BE)
+}
+
+private enum class ControlIcon {
+    CHIP,
+    LIGHT,
+    COLOR,
+    FAN,
+    POWER,
+    COOL,
+    TURBO,
+    SWING,
+    LED,
+    NIGHT_LAMP,
 }
 
 @Composable
@@ -142,6 +156,7 @@ private fun Esp32ControllerApp() {
                 lastStatus = lastStatus,
                 activeCommand = activeCommand,
                 onLight = { sendCommand("Light", Esp32Commands.TOGGLE_LIGHT) },
+                onColor = { sendCommand("Color", Esp32Commands.NEXT_COLOR) },
                 onFan = { sendCommand("Fan", Esp32Commands.TOGGLE_FAN) },
                 onNightLamp = { sendCommand("Night lamp", Esp32Commands.TOGGLE_NIGHT_LAMP) },
                 onPower = {
@@ -199,6 +214,7 @@ private fun ControllerScreen(
     lastStatus: String,
     activeCommand: String?,
     onLight: () -> Unit,
+    onColor: () -> Unit,
     onFan: () -> Unit,
     onNightLamp: () -> Unit,
     onPower: () -> Unit,
@@ -213,25 +229,32 @@ private fun ControllerScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(11.dp),
     ) {
         Header(lastStatus = lastStatus, activeCommand = activeCommand)
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
             CommandPill(
                 label = "Light",
-                symbol = "L",
+                icon = ControlIcon.LIGHT,
                 onClick = onLight,
                 modifier = Modifier.weight(1f),
             )
             CommandPill(
+                label = "Color",
+                icon = ControlIcon.COLOR,
+                onClick = onColor,
+                modifier = Modifier.weight(1f),
+            )
+            CommandPill(
                 label = "Fan",
-                symbol = "F",
+                icon = ControlIcon.FAN,
                 onClick = onFan,
                 modifier = Modifier.weight(1f),
             )
@@ -254,11 +277,11 @@ private fun ControllerScreen(
         WideCommandCard(
             title = "Night Lamp",
             detail = "Toggle bedside glow",
-            symbol = "NL",
+            icon = ControlIcon.NIGHT_LAMP,
             onClick = onNightLamp,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
     }
 }
 
@@ -269,8 +292,8 @@ private fun Header(
 ) {
     PanelFrame(
         modifier = Modifier.fillMaxWidth(),
-        cornerRadius = 30,
-        contentPadding = 20,
+        cornerRadius = 24,
+        contentPadding = 14,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -279,15 +302,15 @@ private fun Header(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.weight(1f),
             ) {
-                ChipIcon()
+                IconBadge(icon = ControlIcon.CHIP, sizeDp = 46, cornerRadiusDp = 16, vivid = true)
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "BEDROOM",
                         color = Esp32Palette.Bone,
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 4.sp,
                         maxLines = 1,
@@ -296,7 +319,7 @@ private fun Header(
                     Text(
                         text = Esp32Commands.BASE_URL,
                         color = Esp32Palette.Muted,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -317,7 +340,7 @@ private fun Header(
                     Text(
                         text = "ONLINE",
                         color = Esp32Palette.Muted,
-                        fontSize = 13.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 2.sp,
                     )
@@ -329,45 +352,11 @@ private fun Header(
                     } else {
                         Esp32Palette.Cyan
                     },
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun ChipIcon() {
-    Box(
-        modifier = Modifier
-            .size(58.dp)
-            .shadow(12.dp, RoundedCornerShape(18.dp), ambientColor = Esp32Palette.Red)
-            .clip(RoundedCornerShape(18.dp))
-            .background(Esp32Palette.Red),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(modifier = Modifier.size(38.dp)) {
-            val stroke = Stroke(width = 3.5f, cap = StrokeCap.Round)
-            drawRoundRect(
-                color = Color.White,
-                topLeft = Offset(size.width * 0.22f, size.height * 0.22f),
-                size = Size(size.width * 0.56f, size.height * 0.56f),
-                style = stroke,
-            )
-            drawLine(Color.White, Offset(0f, size.height * 0.3f), Offset(size.width * 0.18f, size.height * 0.3f), strokeWidth = 3.5f)
-            drawLine(Color.White, Offset(0f, size.height * 0.5f), Offset(size.width * 0.18f, size.height * 0.5f), strokeWidth = 3.5f)
-            drawLine(Color.White, Offset(0f, size.height * 0.7f), Offset(size.width * 0.18f, size.height * 0.7f), strokeWidth = 3.5f)
-            drawLine(Color.White, Offset(size.width * 0.82f, size.height * 0.3f), Offset(size.width, size.height * 0.3f), strokeWidth = 3.5f)
-            drawLine(Color.White, Offset(size.width * 0.82f, size.height * 0.5f), Offset(size.width, size.height * 0.5f), strokeWidth = 3.5f)
-            drawLine(Color.White, Offset(size.width * 0.82f, size.height * 0.7f), Offset(size.width, size.height * 0.7f), strokeWidth = 3.5f)
-            drawLine(Color.White, Offset(size.width * 0.34f, 0f), Offset(size.width * 0.34f, size.height * 0.18f), strokeWidth = 3.5f)
-            drawLine(Color.White, Offset(size.width * 0.5f, 0f), Offset(size.width * 0.5f, size.height * 0.18f), strokeWidth = 3.5f)
-            drawLine(Color.White, Offset(size.width * 0.66f, 0f), Offset(size.width * 0.66f, size.height * 0.18f), strokeWidth = 3.5f)
-            drawLine(Color.White, Offset(size.width * 0.34f, size.height * 0.82f), Offset(size.width * 0.34f, size.height), strokeWidth = 3.5f)
-            drawLine(Color.White, Offset(size.width * 0.5f, size.height * 0.82f), Offset(size.width * 0.5f, size.height), strokeWidth = 3.5f)
-            drawLine(Color.White, Offset(size.width * 0.66f, size.height * 0.82f), Offset(size.width * 0.66f, size.height), strokeWidth = 3.5f)
         }
     }
 }
@@ -388,10 +377,10 @@ private fun AcPanel(
 ) {
     PanelFrame(
         modifier = Modifier.fillMaxWidth(),
-        cornerRadius = 26,
-        contentPadding = 18,
+        cornerRadius = 22,
+        contentPadding = 14,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -401,14 +390,14 @@ private fun AcPanel(
                     Text(
                         text = "AIR CONDITIONER",
                         color = Esp32Palette.Muted,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 3.sp,
                     )
                     Text(
                         text = if (acPower) "ACTIVE COOLING" else "STANDBY",
                         color = if (acPower) Esp32Palette.Cyan else Esp32Palette.Stroke,
-                        fontSize = 12.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 2.sp,
                     )
@@ -423,11 +412,11 @@ private fun AcPanel(
             )
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                ActionTile("Cool", "CO", onCool, Modifier.weight(1f))
-                ActionTile("Turbo", "TB", onTurbo, Modifier.weight(1f))
+                ActionTile("Cool", ControlIcon.COOL, onCool, Modifier.weight(1f))
+                ActionTile("Turbo", ControlIcon.TURBO, onTurbo, Modifier.weight(1f))
             }
 
             FanSpeedSelector(
@@ -436,11 +425,11 @@ private fun AcPanel(
             )
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                ActionTile("Swing", "SW", onSwing, Modifier.weight(1f))
-                ActionTile("LED", "LD", onLed, Modifier.weight(1f))
+                ActionTile("Swing", ControlIcon.SWING, onSwing, Modifier.weight(1f))
+                ActionTile("LED", ControlIcon.LED, onLed, Modifier.weight(1f))
             }
         }
     }
@@ -455,7 +444,7 @@ private fun TemperatureCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.verticalGradient(
                     listOf(
@@ -464,10 +453,10 @@ private fun TemperatureCard(
                     ),
                 ),
             )
-            .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(24.dp))
-            .padding(20.dp),
+            .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(20.dp))
+            .padding(14.dp),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -477,7 +466,7 @@ private fun TemperatureCard(
                     Text(
                         text = "TEMPERATURE",
                         color = Esp32Palette.Muted,
-                        fontSize = 12.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 3.sp,
                     )
@@ -485,23 +474,23 @@ private fun TemperatureCard(
                         Text(
                             text = temperature.toString(),
                             color = Esp32Palette.Bone,
-                            fontSize = 72.sp,
+                            fontSize = 54.sp,
                             fontWeight = FontWeight.Light,
-                            lineHeight = 74.sp,
+                            lineHeight = 56.sp,
                         )
                         Text(
                             text = "\u00B0",
                             color = Esp32Palette.Accent,
-                            fontSize = 30.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 12.dp),
+                            modifier = Modifier.padding(top = 8.dp),
                         )
                     }
                 }
                 Text(
                     text = "17 - 30 C",
                     color = Esp32Palette.Muted,
-                    fontSize = 13.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                 )
             }
@@ -529,23 +518,23 @@ private fun FanSpeedSelector(
     selected: FanSpeed,
     onClick: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = "FAN",
             color = Esp32Palette.Muted,
-            fontSize = 12.sp,
+            fontSize = 10.sp,
             fontWeight = FontWeight.Black,
             letterSpacing = 3.sp,
         )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
+                .clip(RoundedCornerShape(15.dp))
                 .background(Esp32Palette.Night)
-                .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(18.dp))
+                .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(15.dp))
                 .clickable(onClick = onClick)
-                .padding(5.dp),
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             FanSpeed.entries.forEach { speed ->
                 val selectedColor by animateColorAsState(
@@ -555,15 +544,15 @@ private fun FanSpeedSelector(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(selectedColor)
-                        .padding(vertical = 14.dp),
+                        .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = speed.label,
                         color = if (speed == selected) Esp32Palette.Bone else Esp32Palette.Muted,
-                        fontSize = 16.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Black,
                     )
                 }
@@ -588,53 +577,47 @@ private fun PowerButton(
 
     Box(
         modifier = Modifier
-            .size(70.dp)
+            .size(52.dp)
             .clip(CircleShape)
             .background(Color(0xFF211815))
             .border(1.5.dp, borderColor.copy(alpha = 0.7f), CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = "I/O",
-            color = contentColor,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 1.sp,
-        )
+        DrawControlIcon(icon = ControlIcon.POWER, tint = contentColor, modifier = Modifier.size(24.dp))
     }
 }
 
 @Composable
 private fun CommandPill(
     label: String,
-    symbol: String,
+    icon: ControlIcon,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
-            .height(86.dp)
-            .clip(RoundedCornerShape(22.dp))
+            .height(66.dp)
+            .clip(RoundedCornerShape(18.dp))
             .background(
                 Brush.horizontalGradient(
                     listOf(Esp32Palette.CopperDark, Esp32Palette.Copper),
                 ),
             )
-            .border(1.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(22.dp))
+            .border(1.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            SymbolBadge(symbol = symbol)
+            IconBadge(icon = icon)
             Text(
                 text = label,
                 color = Esp32Palette.Bone,
-                fontSize = 19.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Black,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -646,29 +629,29 @@ private fun CommandPill(
 @Composable
 private fun ActionTile(
     label: String,
-    symbol: String,
+    icon: ControlIcon,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
-            .height(78.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .height(58.dp)
+            .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFF16120F))
-            .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(18.dp))
+            .border(1.dp, Esp32Palette.Stroke, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(9.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            SymbolBadge(symbol = symbol, compact = true)
+            IconBadge(icon = icon, compact = true)
             Text(
                 text = label,
                 color = Esp32Palette.Muted,
-                fontSize = 16.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Black,
             )
         }
@@ -679,15 +662,15 @@ private fun ActionTile(
 private fun WideCommandCard(
     title: String,
     detail: String,
-    symbol: String,
+    icon: ControlIcon,
     onClick: () -> Unit,
 ) {
     PanelFrame(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        cornerRadius = 24,
-        contentPadding = 18,
+        cornerRadius = 20,
+        contentPadding = 14,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -698,42 +681,142 @@ private fun WideCommandCard(
                 Text(
                     text = title,
                     color = Esp32Palette.Bone,
-                    fontSize = 24.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Black,
                 )
                 Text(
                     text = detail,
                     color = Esp32Palette.Muted,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                 )
             }
-            SymbolBadge(symbol = symbol)
+            IconBadge(icon = icon)
         }
     }
 }
 
 @Composable
-private fun SymbolBadge(
-    symbol: String,
+private fun IconBadge(
+    icon: ControlIcon,
     compact: Boolean = false,
+    sizeDp: Int = if (compact) 30 else 36,
+    cornerRadiusDp: Int = if (compact) 10 else 12,
+    vivid: Boolean = false,
 ) {
-    val size = if (compact) 34.dp else 42.dp
     Box(
         modifier = Modifier
-            .size(size)
-            .clip(RoundedCornerShape(if (compact) 12.dp else 14.dp))
-            .background(Color(0xFF100C0A))
-            .border(1.dp, Esp32Palette.Accent.copy(alpha = 0.65f), RoundedCornerShape(if (compact) 12.dp else 14.dp)),
+            .size(sizeDp.dp)
+            .clip(RoundedCornerShape(cornerRadiusDp.dp))
+            .background(if (vivid) Esp32Palette.Red else Color(0xFF100C0A))
+            .border(
+                1.dp,
+                if (vivid) Color.White.copy(alpha = 0.12f) else Esp32Palette.Accent.copy(alpha = 0.65f),
+                RoundedCornerShape(cornerRadiusDp.dp),
+            ),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = symbol,
-            color = Esp32Palette.AccentSoft,
-            fontSize = if (compact) 12.sp else 14.sp,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center,
+        DrawControlIcon(
+            icon = icon,
+            tint = if (vivid) Color.White else Esp32Palette.AccentSoft,
+            modifier = Modifier.size((sizeDp * 0.58f).dp),
         )
+    }
+}
+
+@Composable
+private fun DrawControlIcon(
+    icon: ControlIcon,
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        val stroke = Stroke(width = w * 0.10f, cap = StrokeCap.Round)
+        when (icon) {
+            ControlIcon.CHIP -> {
+                drawRoundRect(
+                    color = tint,
+                    topLeft = Offset(w * 0.22f, h * 0.22f),
+                    size = Size(w * 0.56f, h * 0.56f),
+                    style = stroke,
+                )
+                listOf(0.30f, 0.50f, 0.70f).forEach { y ->
+                    drawLine(tint, Offset(0f, h * y), Offset(w * 0.18f, h * y), strokeWidth = w * 0.09f)
+                    drawLine(tint, Offset(w * 0.82f, h * y), Offset(w, h * y), strokeWidth = w * 0.09f)
+                }
+                listOf(0.34f, 0.50f, 0.66f).forEach { x ->
+                    drawLine(tint, Offset(w * x, 0f), Offset(w * x, h * 0.18f), strokeWidth = w * 0.09f)
+                    drawLine(tint, Offset(w * x, h * 0.82f), Offset(w * x, h), strokeWidth = w * 0.09f)
+                }
+            }
+            ControlIcon.LIGHT -> {
+                drawCircle(tint, radius = w * 0.24f, center = Offset(w * 0.5f, h * 0.36f), style = stroke)
+                drawLine(tint, Offset(w * 0.38f, h * 0.62f), Offset(w * 0.62f, h * 0.62f), strokeWidth = w * 0.10f)
+                drawLine(tint, Offset(w * 0.42f, h * 0.77f), Offset(w * 0.58f, h * 0.77f), strokeWidth = w * 0.10f)
+            }
+            ControlIcon.COLOR -> {
+                drawCircle(tint, radius = w * 0.16f, center = Offset(w * 0.36f, h * 0.34f), style = stroke)
+                drawCircle(tint, radius = w * 0.16f, center = Offset(w * 0.63f, h * 0.46f), style = stroke)
+                drawCircle(tint, radius = w * 0.16f, center = Offset(w * 0.42f, h * 0.68f), style = stroke)
+            }
+            ControlIcon.FAN -> {
+                drawCircle(tint, radius = w * 0.10f, center = Offset(w * 0.5f, h * 0.5f))
+                drawArc(tint, 210f, 90f, false, Offset(w * 0.18f, h * 0.08f), Size(w * 0.44f, h * 0.44f), style = stroke)
+                drawArc(tint, 330f, 90f, false, Offset(w * 0.38f, h * 0.08f), Size(w * 0.44f, h * 0.44f), style = stroke)
+                drawArc(tint, 90f, 90f, false, Offset(w * 0.28f, h * 0.45f), Size(w * 0.44f, h * 0.44f), style = stroke)
+            }
+            ControlIcon.POWER -> {
+                drawArc(tint, 135f, 270f, false, Offset(w * 0.18f, h * 0.18f), Size(w * 0.64f, h * 0.64f), style = stroke)
+                drawLine(tint, Offset(w * 0.5f, h * 0.08f), Offset(w * 0.5f, h * 0.42f), strokeWidth = w * 0.11f)
+            }
+            ControlIcon.COOL -> {
+                drawLine(tint, Offset(w * 0.5f, h * 0.12f), Offset(w * 0.5f, h * 0.88f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.17f, h * 0.31f), Offset(w * 0.83f, h * 0.69f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.83f, h * 0.31f), Offset(w * 0.17f, h * 0.69f), strokeWidth = w * 0.09f)
+            }
+            ControlIcon.TURBO -> {
+                val path = Path().apply {
+                    moveTo(w * 0.5f, h * 0.08f)
+                    lineTo(w * 0.75f, h * 0.65f)
+                    lineTo(w * 0.56f, h * 0.58f)
+                    lineTo(w * 0.5f, h * 0.92f)
+                    lineTo(w * 0.44f, h * 0.58f)
+                    lineTo(w * 0.25f, h * 0.65f)
+                    close()
+                }
+                drawPath(path, tint)
+            }
+            ControlIcon.SWING -> {
+                drawLine(tint, Offset(w * 0.15f, h * 0.38f), Offset(w * 0.78f, h * 0.38f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.64f, h * 0.24f), Offset(w * 0.80f, h * 0.38f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.64f, h * 0.52f), Offset(w * 0.80f, h * 0.38f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.85f, h * 0.66f), Offset(w * 0.22f, h * 0.66f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.36f, h * 0.52f), Offset(w * 0.20f, h * 0.66f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.36f, h * 0.80f), Offset(w * 0.20f, h * 0.66f), strokeWidth = w * 0.09f)
+            }
+            ControlIcon.LED -> {
+                drawArc(tint, 200f, 140f, false, Offset(w * 0.26f, h * 0.22f), Size(w * 0.48f, h * 0.48f), style = stroke)
+                drawLine(tint, Offset(w * 0.36f, h * 0.68f), Offset(w * 0.64f, h * 0.68f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.42f, h * 0.82f), Offset(w * 0.58f, h * 0.82f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.5f, h * 0.02f), Offset(w * 0.5f, h * 0.12f), strokeWidth = w * 0.08f)
+                drawLine(tint, Offset(w * 0.18f, h * 0.18f), Offset(w * 0.26f, h * 0.26f), strokeWidth = w * 0.08f)
+                drawLine(tint, Offset(w * 0.82f, h * 0.18f), Offset(w * 0.74f, h * 0.26f), strokeWidth = w * 0.08f)
+            }
+            ControlIcon.NIGHT_LAMP -> {
+                val path = Path().apply {
+                    moveTo(w * 0.32f, h * 0.18f)
+                    lineTo(w * 0.68f, h * 0.18f)
+                    lineTo(w * 0.78f, h * 0.56f)
+                    lineTo(w * 0.22f, h * 0.56f)
+                    close()
+                }
+                drawPath(path, tint)
+                drawLine(tint, Offset(w * 0.5f, h * 0.56f), Offset(w * 0.5f, h * 0.82f), strokeWidth = w * 0.09f)
+                drawLine(tint, Offset(w * 0.30f, h * 0.84f), Offset(w * 0.70f, h * 0.84f), strokeWidth = w * 0.09f)
+            }
+        }
     }
 }
 
@@ -747,7 +830,7 @@ private fun PanelFrame(
     Box(
         modifier = modifier
             .shadow(
-                elevation = 18.dp,
+                elevation = 10.dp,
                 shape = RoundedCornerShape(cornerRadius.dp),
                 ambientColor = Esp32Palette.Accent.copy(alpha = 0.08f),
                 spotColor = Esp32Palette.Accent.copy(alpha = 0.10f),

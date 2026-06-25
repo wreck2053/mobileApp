@@ -20,6 +20,7 @@ object Esp32Commands {
     const val BASE_URL = "http://192.168.0.108/"
 
     const val TOGGLE_LIGHT = "/toggle-light"
+    const val NEXT_COLOR = "/next-color"
     const val TOGGLE_FAN = "/toggle-fan"
     const val TOGGLE_NIGHT_LAMP = "/toggle-nl"
     const val POWER_OFF = "/power/off"
