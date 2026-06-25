@@ -181,7 +181,7 @@ private fun Esp32ControllerApp() {
                 Snackbar(
                     containerColor = Color(0xFF371513),
                     contentColor = Esp32Palette.Bone,
-                    actionColor = Esp32Palette.Accent,
+                    actionContentColor = Esp32Palette.Accent,
                     shape = RoundedCornerShape(14.dp),
                 ) {
                     Text(data.visuals.message)
