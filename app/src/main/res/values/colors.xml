@@ -1,0 +1,5 @@
+<resources>
+    <color name="esp32_black">#070605</color>
+    <color name="esp32_panel">#15110F</color>
+    <color name="esp32_orange">#FF8733</color>
+</resources>
